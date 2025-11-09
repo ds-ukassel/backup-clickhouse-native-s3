@@ -1,0 +1,8 @@
+services:
+  clickhouse-native-s3:
+    image: registry.uni-kassel.dev/backup/clickhouse-native-s3
+    build:
+      context: .
+      platforms:
+        - linux/amd64
+        - linux/arm64
