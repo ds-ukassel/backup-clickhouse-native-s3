@@ -14,7 +14,7 @@ set -e
 # Optional variables with defaults
 CLICKHOUSE_PORT="${CLICKHOUSE_PORT:-9000}"
 MINIO_BUCKET="${MINIO_BUCKET:-clickhouse-backups}"
-MINIO_PATH="${MINIO_PATH:-clickhouse-backups}"
+MINIO_PATH="${MINIO_PATH-clickhouse-backups}"
 RETENTION_PERIOD="${RETENTION_PERIOD:-}"
 MINIO_COMMAND="${MINIO_COMMAND:-mc}"
 DISCORD_WEBHOOK_URL="${DISCORD_WEBHOOK_URL:-}"
