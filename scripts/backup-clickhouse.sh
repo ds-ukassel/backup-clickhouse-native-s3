@@ -37,10 +37,7 @@ echo "[clickhouse-backup] Starting backup at $NOW..."
 $MINIO_COMMAND alias set storage "$MINIO_ENDPOINT" "$MINIO_ACCESS_KEY" "$MINIO_SECRET_KEY"
 $MINIO_COMMAND mb -p "storage/$MINIO_BUCKET"
 
-# Split CLICKHOUSE_TABLES into seperate tables
-TABLE_LIST=$(echo "$CLICKHOUSE_TABLES" | tr ';' '\n' | xargs -n 1 echo)
-
-for TABLE in $TABLE_LIST; do
+for TABLE in $CLICKHOUSE_TABLES; do
   [ -z "$TABLE" ] && continue # Skip empty table names
 
   BACKUP_FILE="${CLICKHOUSE_DATABASE}_${TABLE}_${NOW}.native.gz"
