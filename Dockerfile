@@ -21,7 +21,9 @@ RUN ARCH=$(dpkg --print-architecture) \
     && echo "deb [signed-by=/usr/share/keyrings/clickhouse-keyring.gpg arch=${ARCH}] https://packages.clickhouse.com/deb stable main"  \
     | sudo tee /etc/apt/sources.list.d/clickhouse.list
 
-RUN apt-get update && apt-get install -y --no-install-recommends clickhouse-client \
+RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
+    --mount=type=cache,target=/var/lib/apt,sharing=locked \
+    apt-get update && apt-get install -y --no-install-recommends clickhouse-client \
     && rm -rf /var/lib/apt/lists/*
 
 RUN curl -L "https://dl.min.io/client/mc/release/linux-amd64/mc" -o /usr/local/bin/mc \
