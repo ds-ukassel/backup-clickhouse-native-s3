@@ -1,12 +1,12 @@
 #!/bin/bash
-set -e
+set -eo pipefail
 
 # Required environment variables
 : "${CLICKHOUSE_HOST:?Missing CLICKHOUSE_HOST}"
 : "${CLICKHOUSE_USER:?Missing CLICKHOUSE_USER}"
 : "${CLICKHOUSE_PASSWORD:?Missing CLICKHOUSE_PASSWORD}"
 : "${CLICKHOUSE_DATABASE:?Missing CLICKHOUSE_DATABASE}"
-: "${CLICKHOUSE_TABLES:?Missing CLICKHOUSE_TABLES (semicolon-separated list of tables)}"
+: "${CLICKHOUSE_TABLES:?Missing CLICKHOUSE_TABLES (space-separated list of tables)}"
 : "${MINIO_ENDPOINT:?Missing MINIO_ENDPOINT}"
 : "${MINIO_ACCESS_KEY:?Missing MINIO_ACCESS_KEY}"
 : "${MINIO_SECRET_KEY:?Missing MINIO_SECRET_KEY}"
@@ -37,14 +37,31 @@ echo "[clickhouse-backup] Starting backup at $NOW..."
 $MINIO_COMMAND alias set storage "$MINIO_ENDPOINT" "$MINIO_ACCESS_KEY" "$MINIO_SECRET_KEY"
 $MINIO_COMMAND mb -p "storage/$MINIO_BUCKET"
 
-for TABLE in $CLICKHOUSE_TABLES; do
-  [ -z "$TABLE" ] && continue # Skip empty table names
+for TABLE_RANGE_COLUMN_FORMAT in $CLICKHOUSE_TABLES; do
+  [ -z "$TABLE_RANGE_COLUMN_FORMAT" ] && continue # Skip empty table names
+
+  IFS=':' read -r TABLE RANGE COLUMN FORMAT <<< "$TABLE_RANGE_COLUMN_FORMAT"
+
+  RANGE="${RANGE:-FULL}"
+  echo "[clickhouse-backup] Processing table '$TABLE' with range '$RANGE'..."
+  if [ "$RANGE" != "FULL" ]; then
+    if [ -z "$COLUMN" ] || [ -z "$FORMAT" ]; then
+      echo "[clickhouse-backup] ERROR: COLUMN and FORMAT must be specified when RANGE is not FULL for table '$TABLE'."
+      exit 1
+    fi
+
+    QUERY="$(python3 /usr/local/bin/query_generator.py "$RANGE" "$CLICKHOUSE_DATABASE" "$TABLE" "$COLUMN" "$FORMAT")"
+    echo "[clickhouse-backup] Generated query for table '$TABLE' with range '$RANGE': $QUERY"
+
+  else
+    QUERY="SELECT * FROM $CLICKHOUSE_DATABASE.$TABLE FORMAT Native"
+  fi
 
   BACKUP_FILE="${CLICKHOUSE_DATABASE}_${TABLE}_${NOW}.native.gz"
 
   echo "[clickhouse-backup] Exporting '$CLICKHOUSE_DATABASE.$TABLE' and uploading..."
 
-  $CLICKHOUSE_COMMAND --query="SELECT * FROM $CLICKHOUSE_DATABASE.$TABLE FORMAT Native" \
+  $CLICKHOUSE_COMMAND --query="$QUERY" \
     | gzip -c \
     | $MINIO_COMMAND pipe "storage/$MINIO_BUCKET/$MINIO_PATH/$BACKUP_FILE"
 done

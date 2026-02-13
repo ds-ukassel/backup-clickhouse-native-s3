@@ -11,15 +11,16 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
     ca-certificates \
     apt-transport-https \
     gnupg \
+    python3 \
     && rm -rf /var/lib/apt/lists/*
 
 RUN curl -fsSL 'https://packages.clickhouse.com/rpm/lts/repodata/repomd.xml.key'  \
-    | sudo gpg --dearmor -o /usr/share/keyrings/clickhouse-keyring.gpg
+    | gpg --dearmor -o /usr/share/keyrings/clickhouse-keyring.gpg
 
 ARG ARCH
 RUN ARCH=$(dpkg --print-architecture) \
     && echo "deb [signed-by=/usr/share/keyrings/clickhouse-keyring.gpg arch=${ARCH}] https://packages.clickhouse.com/deb stable main"  \
-    | sudo tee /etc/apt/sources.list.d/clickhouse.list
+    | tee /etc/apt/sources.list.d/clickhouse.list
 
 RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
     --mount=type=cache,target=/var/lib/apt,sharing=locked \
@@ -31,6 +32,8 @@ RUN curl -L "https://dl.min.io/client/mc/release/linux-amd64/mc" -o /usr/local/b
 
 COPY scripts/backup-clickhouse.sh /usr/local/bin/backup-clickhouse.sh
 RUN chmod +x /usr/local/bin/backup-clickhouse.sh
+
+COPY scripts/query_generator.py /usr/local/bin/query_generator.py
 
 ENV MINIO_COMMAND="mc"
 ENTRYPOINT ["/usr/local/bin/backup-clickhouse.sh"]
