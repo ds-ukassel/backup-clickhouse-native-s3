@@ -44,7 +44,7 @@ for TABLE_RANGE_COLUMN_FORMAT in $CLICKHOUSE_TABLES; do
 
   RANGE="${RANGE:-FULL}"
   echo "[clickhouse-backup] Processing table '$TABLE' with range '$RANGE'..."
-  if [ "$RANGE" != "FULL" ]; then
+  if [ "${RANGE^^}" != "FULL" ]; then
     if [ -z "$COLUMN" ] || [ -z "$FORMAT" ]; then
       echo "[clickhouse-backup] ERROR: COLUMN and FORMAT must be specified when RANGE is not FULL for table '$TABLE'."
       exit 1

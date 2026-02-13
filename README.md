@@ -39,7 +39,7 @@ When setting `DISCORD_WEBHOOK_URL`, a notification will be sent to the specified
 ## Strategies
 The script supports different backup strategies for creating partial backups of specific tables.
 
-The strategies are defined in the `TABLES` environment variable as a space-separated list of `table:STRATEGY:COLUMN:FORMAT` pairs.
+The strategies are defined in the `CLICKHOUSE_TABLES` environment variable as a space-separated list of `table:STRATEGY:COLUMN:FORMAT` pairs.
 If `STRATEGY` is not specified, a full backup of the table will be created.
 If `STRATEGY` is specified, the script will filter the rows and only back up the rows that match the specified strategy.
 
@@ -53,6 +53,6 @@ The `COLUMN` defines the field used for filtering the rows (e.g. `createdAt` as 
 The `FORMAT` defines the format of the column.
 
 Supported formats:
-- `DT`: DateTime (e.g. `2026-13-02 12:00:00`)
+- `DT`: DateTime (e.g. `2026-02-02 12:00:00`)
 - `EPOCH`: Unix timestamp (e.g. `1770988180`)
 - `OID`: ObjectId (from MongoDB)
