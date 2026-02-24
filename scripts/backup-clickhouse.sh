@@ -24,7 +24,16 @@ NOW=$(date +%Y%m%d_%H%M%S)
 send_webhook_error() {
   if [ -n "$DISCORD_WEBHOOK_URL" ]; then
     echo "[clickhouse-backup] Sending error notification to Discord webhook..."
-    PAYLOAD="{\"content\": \"Backup of ClickHouse at $NOW failed!\"}"
+
+    # Remove ':range:column:format' from tables
+    local TABLE_LIST=""
+    for entry in $CLICKHOUSE_TABLES; do
+      table="${entry%%:*}" # Remove everything after first colon
+      TABLE_LIST+="$table, "
+    done
+    TABLE_LIST="${TABLE_LIST%, }" # Remove trailing comma+space
+
+    PAYLOAD="{\"content\": \"Backup of ClickHouse database $CLICKHOUSE_DATABASE (tables: $TABLE_LIST) at $NOW failed!\"}"
     curl -H "Content-Type: application/json" -X POST -d "$PAYLOAD" "$DISCORD_WEBHOOK_URL" || true
   fi
 }
