@@ -6,7 +6,7 @@ def date_to_epoch_seconds(date) -> int:
 
 
 def epoch_to_oid(epoch_seconds) -> str:
-    return hex(epoch_seconds)[2:] + "0000000000000000"
+    return f"{epoch_seconds::08x}0000000000000000"
 
 
 def strategy_to_query(range, database, table, field, format) -> str:
@@ -31,8 +31,8 @@ def strategy_to_query(range, database, table, field, format) -> str:
     end_epoch = date_to_epoch_seconds(end_date)
 
     if format == "OID":
-        start = epoch_to_oid(start_epoch)
-        end = epoch_to_oid(end_epoch)
+        start = f"'{epoch_to_oid(start_epoch)}'"
+        end = f"'{epoch_to_oid(end_epoch)}'"
     elif format == "EPOCH":
         start = start_epoch
         end = end_epoch
