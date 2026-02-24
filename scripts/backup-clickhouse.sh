@@ -59,7 +59,7 @@ for TABLE_RANGE_COLUMN_FORMAT in $CLICKHOUSE_TABLES; do
       exit 1
     fi
 
-    QUERY="$(python3 /usr/local/bin/query_generator.py "$RANGE" "$CLICKHOUSE_DATABASE" "$TABLE" "$COLUMN" "$FORMAT")"
+    QUERY="$(python3 query_generator.py "$RANGE" "$CLICKHOUSE_DATABASE" "$TABLE" "$COLUMN" "$FORMAT")"
     echo "[clickhouse-backup] Generated query for table '$TABLE' with range '$RANGE': $QUERY"
 
   else
