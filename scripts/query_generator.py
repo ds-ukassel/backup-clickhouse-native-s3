@@ -6,7 +6,7 @@ def date_to_epoch_seconds(date) -> int:
 
 
 def epoch_to_oid(epoch_seconds) -> str:
-    return f"{epoch_seconds::08x}0000000000000000"
+    return f"{epoch_seconds:08x}0000000000000000"
 
 
 def strategy_to_query(range, database, table, field, format) -> str:
