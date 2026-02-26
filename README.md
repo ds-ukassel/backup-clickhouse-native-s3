@@ -5,12 +5,13 @@ Simple script for backing up clickhouse tables to an S3 (minio) bucket using the
 
 ```bash
 # Required environment variables
-CLICKHOUSE_HOST='http://localhost:9100'
+CLICKHOUSE_HOST='localhost'
+CLICKHOUSE_PORT=9000 # Protocol Port
 CLICKHOUSE_USER='default'
 CLICKHOUSE_PASSWORD='password'
 CLICKHOUSE_DATABASE='default'
 CLICKHOUSE_TABLES='table1:range:column:format table2'
-MINIO_ENDPOINT='http://localhost:9000'
+MINIO_ENDPOINT='http://localhost:9100'
 MINIO_ACCESS_KEY='minioadmin'
 MINIO_SECRET_KEY='minioadmin'
 

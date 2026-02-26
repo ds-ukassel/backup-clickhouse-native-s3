@@ -17,6 +17,7 @@ MINIO_BUCKET="${MINIO_BUCKET:-clickhouse-backups}"
 MINIO_PATH="${MINIO_PATH-clickhouse-backups}"
 RETENTION_PERIOD="${RETENTION_PERIOD:-}"
 MINIO_COMMAND="${MINIO_COMMAND:-mc}"
+CLICKHOUSE_COMMAND="${CLICKHOUSE_COMMAND:-clickhouse-client}"
 DISCORD_WEBHOOK_URL="${DISCORD_WEBHOOK_URL:-}"
 
 NOW=$(date +%Y%m%d_%H%M%S)
@@ -40,8 +41,6 @@ send_webhook_error() {
 
 trap 'send_webhook_error' ERR
 
-CLICKHOUSE_COMMAND="clickhouse-client --host=$CLICKHOUSE_HOST --port=$CLICKHOUSE_PORT --user=$CLICKHOUSE_USER --password=$CLICKHOUSE_PASSWORD"
-
 echo "[clickhouse-backup] Starting backup at $NOW..."
 $MINIO_COMMAND alias set storage "$MINIO_ENDPOINT" "$MINIO_ACCESS_KEY" "$MINIO_SECRET_KEY"
 $MINIO_COMMAND mb -p "storage/$MINIO_BUCKET"
@@ -59,7 +58,7 @@ for TABLE_RANGE_COLUMN_FORMAT in $CLICKHOUSE_TABLES; do
       exit 1
     fi
 
-    QUERY="$(python3 query_generator.py "$RANGE" "$CLICKHOUSE_DATABASE" "$TABLE" "$COLUMN" "$FORMAT")"
+    QUERY="$(query_generator.py "$RANGE" "$CLICKHOUSE_DATABASE" "$TABLE" "$COLUMN" "$FORMAT")"
     echo "[clickhouse-backup] Generated query for table '$TABLE' with range '$RANGE': $QUERY"
 
   else
@@ -70,7 +69,7 @@ for TABLE_RANGE_COLUMN_FORMAT in $CLICKHOUSE_TABLES; do
 
   echo "[clickhouse-backup] Exporting '$CLICKHOUSE_DATABASE.$TABLE' and uploading..."
 
-  $CLICKHOUSE_COMMAND --query="$QUERY" \
+  $CLICKHOUSE_COMMAND --host="$CLICKHOUSE_HOST" --port="$CLICKHOUSE_PORT" --user="$CLICKHOUSE_USER" --password="$CLICKHOUSE_PASSWORD" --query="$QUERY" \
     | gzip -c \
     | $MINIO_COMMAND pipe "storage/$MINIO_BUCKET/$MINIO_PATH/$BACKUP_FILE"
 done

@@ -34,6 +34,8 @@ COPY scripts/backup-clickhouse.sh /usr/local/bin/backup-clickhouse.sh
 RUN chmod +x /usr/local/bin/backup-clickhouse.sh
 
 COPY scripts/query_generator.py /usr/local/bin/query_generator.py
+RUN chmod +x /usr/local/bin/query_generator.py
 
 ENV MINIO_COMMAND="mc"
+ENV CLICKHOUSE_COMMAND="clickhouse-client"
 ENTRYPOINT ["/usr/local/bin/backup-clickhouse.sh"]
