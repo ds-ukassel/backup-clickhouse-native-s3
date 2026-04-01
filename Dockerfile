@@ -1,5 +1,10 @@
 FROM debian:13-slim
 
+RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
+    --mount=type=cache,target=/var/lib/apt,sharing=locked \
+    apt-get update \
+    && apt-get install -y --no-install-recommends ca-certificates curl python3
+
 ARG CLICKHOUSE_VERSION=26.2.4.23
 ARG CLICKHOUSE_CLIENT_CHECKSUM=sha256:db62837caaa34041049f5b23e12f30370e6501270eed7f22b3851a528fe6aed4
 ARG CLICKHOUSE_COMMON_CHECKSUM=sha256:437c272fea4297b38fce9840b020bca954c8f6a9bd5758a9558e24b1162cb070
