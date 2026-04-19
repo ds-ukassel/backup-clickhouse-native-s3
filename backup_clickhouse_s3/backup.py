@@ -1,5 +1,7 @@
+import datetime
 import sys
 import traceback
+from datetime import timedelta
 
 import clickhouse_connect
 from clickhouse_connect.driver import Client
@@ -96,7 +98,17 @@ def main() -> None:
                 print(f"[clickhouse-backup] Backup for table {table} failed with error: {e}", file=sys.stderr)
                 webhook(f"Backup of ClickHouse table `{config.CLICKHOUSE_DATABASE}.{table}` failed.")
 
-        # TODO: Re-add deletion of old backups
+        if config.RETENTION_PERIOD:
+            try:
+                retention_date = datetime.datetime.now(datetime.timezone.utc) - timedelta(days=config.RETENTION_PERIOD)
+                backups = minio.list_objects(config.MINIO_BUCKET, prefix=f"{config.MINIO_PATH}/", recursive=True)
+                for backup in backups:
+                    if backup.last_modified < retention_date:
+                        minio.remove_object(config.MINIO_BUCKET, backup.object_name)
+                        print(f"[clickhouse-backup] Deleted old backup: {backup.object_name}")
+            except Exception as e:
+                print(f"[clickhouse-backup] Error during retention cleanup: {e}", file=sys.stderr)
+                webhook("Retention cleanup failed.")
 
     except Exception as e:
         print(f"[clickhouse-backup] {type(e).__name__}: {e}", file=sys.stderr)
