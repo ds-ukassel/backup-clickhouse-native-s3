@@ -70,5 +70,5 @@ def strategy_to_query(
                    '{config.MINIO_SECRET_KEY}',
                    '{config.SUPPORTED_FORMATS.get(backup_format)[0]}'
                 )
-           SELECT * FROM {config.CLICKHOUSE_DATABASE}.{table} {where_clause}
+           SELECT * FROM "{config.CLICKHOUSE_DATABASE}.{table}" {where_clause}
     """
