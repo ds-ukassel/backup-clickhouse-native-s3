@@ -61,7 +61,7 @@ Supported formats:
 The `backup_format` defines the format of the backup file.
 Supported formats:
 - `CSV` (`.csv`): Comma-separated values
-- `JSON` (`.jsonl`): JSON Lines format
+- `JSONL` (`.jsonl`): JSON Lines format
 - `TSV` (`.tsv`): Tab-separated values
 - `PARQUET` (`.parquet`): Parquet format
 - `NATIVE` (`.clickhouse`): ClickHouse Native format

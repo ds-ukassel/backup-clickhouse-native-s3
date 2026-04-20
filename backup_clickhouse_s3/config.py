@@ -21,9 +21,9 @@ DISCORD_WEBHOOK_URL = os.getenv("DISCORD_WEBHOOK_URL")
 SUPPORTED_FORMATS = {
     "TSV": ("TSVWithNames", "tsv"),
     "CSV": ("CSVWithNames", "csv"),
-    "JSON": ("JSONEachRow", "jsonl"),
+    "JSONL": ("JSONEachRow", "jsonl"),
     "PARQUET": ("Parquet", "parquet"),
-    "NATIVE": ("Native", "clickhouse")
+    "NATIVE": ("Native", "clickhouse"),
 }
 
 DEFAULT_BACKUP_FORMAT = os.getenv("DEFAULT_BACKUP_FORMAT", "NATIVE").upper()
