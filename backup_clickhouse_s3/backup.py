@@ -74,7 +74,7 @@ def main() -> None:
                 ts_format = settings.get("ts_format", "").upper()
                 backup_format = settings.get("backup_format", config.DEFAULT_BACKUP_FORMAT).upper()
             except Exception as e:
-                print(f"[clickhouse-backup] Error parsing settings for table {entry}: {e}", file=sys.stderr)
+                print(f"[clickhouse-backup] Error parsing settings for entry '{entry}': {e}", file=sys.stderr)
                 webhook(f"Backup of entry `{entry}` failed due to invalid settings.")
                 continue
 
@@ -84,18 +84,18 @@ def main() -> None:
                 continue
 
             try:
-                query = strategy_to_query(strategy, table, ts_column, ts_format, backup_format)
+                query, params = strategy_to_query(strategy, table, ts_column, ts_format, backup_format)
             except Exception as e:
-                print(f"[clickhouse-backup] Error generating query for table {table}: {e}", file=sys.stderr)
+                print(f"[clickhouse-backup] Error generating query for table '{table}': {e}", file=sys.stderr)
                 webhook(f"Backup of table `{config.CLICKHOUSE_DATABASE}.{table}` failed due to invalid settings.")
                 continue
 
-            print(f"[clickhouse-backup] Executing backup for table {table} with strategy {strategy} and backup format {backup_format}...")
+            print(f"[clickhouse-backup] Executing backup for table '{table}' with strategy '{strategy}' and backup format '{backup_format}'...")
             try:
-                clickhouse.command(query)
-                print(f"[clickhouse-backup] Backup for table {table} completed successfully.")
+                clickhouse.command(cmd=query, parameters=params)
+                print(f"[clickhouse-backup] Backup for table '{table}' completed successfully.")
             except ClickHouseError as e:
-                print(f"[clickhouse-backup] Backup for table {table} failed with error: {e}", file=sys.stderr)
+                print(f"[clickhouse-backup] Backup for table '{table}' failed with error: {e}", file=sys.stderr)
                 webhook(f"Backup of ClickHouse table `{config.CLICKHOUSE_DATABASE}.{table}` failed.")
 
         if config.RETENTION_PERIOD:
