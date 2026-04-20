@@ -6,6 +6,7 @@ dependencies = [
     "minio~=7.2.15",
     "discord-webhook~=1.4.1",
     "clickhouse-connect~=0.15.0",
+    "json5~=0.14.0",
 ]
 
 [project.scripts]

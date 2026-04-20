@@ -10,7 +10,7 @@ CLICKHOUSE_PORT=8123 # HTTP Port
 CLICKHOUSE_USER='default'
 CLICKHOUSE_PASSWORD='password'
 CLICKHOUSE_DATABASE='default'
-CLICKHOUSE_TABLES='table1;strategy=week;ts_column=createdAt;ts_format=DT table2'
+CLICKHOUSE_TABLES='[{ table: "table1", strategy: "week", ts_column: "created_at", ts_format: "DT", backup_format: "jsonl" }]'
 
 MINIO_ENDPOINT='http://localhost:9100'
 MINIO_ACCESS_KEY='minioadmin'
@@ -37,10 +37,27 @@ Backups will be stored under the specified `MINIO_PATH` in the bucket `MINIO_BUC
 
 When setting `DISCORD_WEBHOOK_URL`, a notification will be sent to the specified Discord webhook when the backup fails.
 
-## Strategies
-The script supports different backup strategies for creating partial backups of specific tables.
+## Backup Settings
 
-The strategies are defined in the `CLICKHOUSE_TABLES` environment variable as a space-separated list of `<table>;strategy=<strategy>;ts_column=<column>;ts_format=<format>;backup_format=<format>` pairs.
+The tables and their corresponding backup settings are provided by the `CLICKHOUSE_TABLES` environment variable as a JSON5 list of objects.
+
+```json5
+[
+  {
+    table: "table1",
+    strategy: "WEEK",
+    ts_column: "created_at",
+    ts_format: "DT",
+    backup_format: "JSONL",
+  },
+  {
+    table: "table2",
+    backup_format: "CSV",
+  },
+]
+```
+
+For each entry, the `table` field is required.
 If `strategy` is not specified, a full backup of the table will be created.
 If `strategy` is specified, the script will filter the rows and only back up the rows that match the specified strategy.
 

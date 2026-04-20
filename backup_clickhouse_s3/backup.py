@@ -4,6 +4,7 @@ import traceback
 from datetime import timedelta
 
 import clickhouse_connect
+import json5
 from clickhouse_connect.driver import Client
 from clickhouse_connect.driver.exceptions import ClickHouseError
 from discord_webhook import DiscordWebhook
@@ -53,29 +54,32 @@ def main() -> None:
         if not minio.bucket_exists(config.MINIO_BUCKET):
             minio.make_bucket(config.MINIO_BUCKET)
 
-        # Go through all entries
-        for entry in config.CLICKHOUSE_TABLES.split(" "):
+        try:
+            tables = json5.loads(config.CLICKHOUSE_TABLES)
+            if not isinstance(tables, list):
+                raise ValueError("Must be a JSON array of table entries.")
+        except Exception as e:
+            print(f"[clickhouse-backup] Error parsing CLICKHOUSE_TABLES: {e}", file=sys.stderr)
+            webhook("Backup process failed due to invalid tables configuration.")
+            exit(1)
 
-            # Skip empty tables
-            if not entry.strip():
+        # Go through all entries
+        for entry in tables:
+            if not isinstance(entry, dict):
+                print(f"[clickhouse-backup] Invalid table entry (not an object): {entry}", file=sys.stderr)
+                webhook(f"Backup of entry `{entry}` failed due to invalid configuration.")
                 continue
 
             # Extract settings
-            try:
-                parts = entry.split(";")
-                table = parts[0]
-                settings = {}
-                for setting in parts[1:]:
-                    key, value = setting.split("=")
-                    settings[key] = value
+            table = entry.get("table", "")
+            strategy = entry.get("strategy", "FULL").upper()
+            ts_column = entry.get("ts_column", "")
+            ts_format = entry.get("ts_format", "").upper()
+            backup_format = entry.get("backup_format", config.DEFAULT_BACKUP_FORMAT).upper()
 
-                strategy = settings.get("strategy", "FULL").upper()
-                ts_column = settings.get("ts_column", "")
-                ts_format = settings.get("ts_format", "").upper()
-                backup_format = settings.get("backup_format", config.DEFAULT_BACKUP_FORMAT).upper()
-            except Exception as e:
-                print(f"[clickhouse-backup] Error parsing settings for entry '{entry}': {e}", file=sys.stderr)
-                webhook(f"Backup of entry `{entry}` failed due to invalid settings.")
+            if not table:
+                print(f"[clickhouse-backup] Error: Table name is required in entry: {entry}", file=sys.stderr)
+                webhook(f"Backup of entry `{entry}` failed due to missing table name.")
                 continue
 
             if strategy != "FULL" and (not ts_column or not ts_format):
