@@ -4,7 +4,7 @@ import traceback
 from datetime import timedelta
 
 import clickhouse_connect
-import json5
+import yaml
 from clickhouse_connect.driver import Client
 from clickhouse_connect.driver.exceptions import ClickHouseError
 from discord_webhook import DiscordWebhook
@@ -55,9 +55,9 @@ def main() -> None:
             minio.make_bucket(config.MINIO_BUCKET)
 
         try:
-            tables = json5.loads(config.CLICKHOUSE_TABLES)
+            tables = yaml.safe_load(config.CLICKHOUSE_TABLES)
             if not isinstance(tables, list):
-                raise ValueError("Must be a JSON array of table entries.")
+                raise ValueError("Must be a YAML array of table entries.")
         except Exception as e:
             print(f"[clickhouse-backup] Error parsing CLICKHOUSE_TABLES: {e}", file=sys.stderr)
             webhook("Backup process failed due to invalid tables configuration.")

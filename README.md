@@ -31,30 +31,25 @@ When running the script, it will connect to the specified clickhouse database, c
 It will also remove backups older than the specified number of days.
 To disable this feature, leave `RETENTION_PERIOD` empty.
 
-`CLICKHOUSE_TABLES` can be used to specify the tables to back up, separated by spaces.
+`CLICKHOUSE_TABLES` can be used to specify the tables to back up (see [Backup Settings](#backup-settings)).
 
 Backups will be stored under the specified `MINIO_PATH` in the bucket `MINIO_BUCKET`, with filenames in the format `<database>_<table>_<strategy>_YYYYMMDD_HHMMSS.<format>`.
 
-When setting `DISCORD_WEBHOOK_URL`, a notification will be sent to the specified Discord webhook when the backup fails.
+When setting `DISCORD_WEBHOOK_URL`, a notification will be sent to the specified Discord webhook if the backup fails.
 
 ## Backup Settings
 
-The tables and their corresponding backup settings are provided by the `CLICKHOUSE_TABLES` environment variable as a JSON5 list of objects.
+The tables and their corresponding backup settings are provided by the `CLICKHOUSE_TABLES` environment variable as a YAML list of objects.
 
-```json5
-[
-  {
-    table: "table1",
-    strategy: "WEEK",
-    ts_column: "created_at",
-    ts_format: "DT",
-    backup_format: "JSONL",
-  },
-  {
-    table: "table2",
-    backup_format: "CSV",
-  },
-]
+```yaml
+- table: "table1"
+  strategy: "WEEK"
+  ts_column: "created_at"
+  ts_format: "DT"
+  backup_format: "JSONL"
+
+- table: "table2"
+  backup_format: "CSV"
 ```
 
 For each entry, the `table` field is required.
@@ -67,7 +62,7 @@ Supported strategies:
 - `week`: [Monday of last week 00:00, Monday of this week 00:00)
 - `month`: [1st day of last month 00:00, 1st day of this month 00:00)
 
-The `column` defines the field used for filtering the rows (e.g. `createdAt` as a DateTime)
+The `ts_column` defines the field used for filtering the rows (e.g. `createdAt` as a DateTime)
 The `ts_format` defines the format of the column.
 
 Supported formats:
