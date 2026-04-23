@@ -1,7 +1,6 @@
 import datetime
 import sys
 import traceback
-from datetime import timedelta
 
 import clickhouse_connect
 import yaml
@@ -10,7 +9,7 @@ from clickhouse_connect.driver.exceptions import ClickHouseError
 from discord_webhook import DiscordWebhook
 from minio import Minio
 
-from backup_clickhouse_s3 import config
+from backup_clickhouse_s3 import config, utils
 from backup_clickhouse_s3.query_generator import strategy_to_query
 
 
@@ -104,7 +103,7 @@ def main() -> None:
 
         if config.RETENTION_PERIOD:
             try:
-                retention_date = datetime.datetime.now(datetime.timezone.utc) - timedelta(days=config.RETENTION_PERIOD)
+                retention_date = datetime.datetime.now(datetime.timezone.utc) - utils.string_to_timedelta(config.RETENTION_PERIOD)
                 backups = minio.list_objects(config.MINIO_BUCKET, prefix=f"{config.MINIO_PATH}/", recursive=True)
                 for backup in backups:
                     if backup.last_modified < retention_date:

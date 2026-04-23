@@ -14,7 +14,7 @@ MINIO_BUCKET = os.getenv("MINIO_BUCKET", "clickhouse-backups")
 MINIO_PATH = os.getenv("MINIO_PATH", "backups")
 MINIO_SECURE = (os.getenv("MINIO_SECURE", "False").lower() in ("true", "1", "enabled")) or MINIO_ENDPOINT.startswith("https://")
 
-RETENTION_PERIOD = int(os.getenv("RETENTION_PERIOD")) if os.getenv("RETENTION_PERIOD") is not None else None
+RETENTION_PERIOD = os.getenv("RETENTION_PERIOD")
 
 DISCORD_WEBHOOK_URL = os.getenv("DISCORD_WEBHOOK_URL")
 
