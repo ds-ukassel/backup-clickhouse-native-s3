@@ -1,6 +1,5 @@
 import datetime
 import sys
-import traceback
 
 import clickhouse_connect
 import yaml
