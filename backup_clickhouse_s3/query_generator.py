@@ -7,7 +7,7 @@ from backup_clickhouse_s3 import config
 Strategy = Literal["FULL", "DAY", "WEEK", "MONTH"]
 TimeStampFormat = Literal["OID", "EPOCH", "DT"]
 
-IDENTIFIER = re.compile(r"^[a-zA-Z][a-zA-Z0-9_-]*$")
+IDENTIFIER = re.compile(r"^[a-zA-Z_][a-zA-Z0-9_-]*$")
 
 def date_to_epoch_seconds(date: datetime) -> int:
     return int(date.timestamp())
