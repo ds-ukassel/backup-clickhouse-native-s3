@@ -101,7 +101,7 @@ def main() -> None:
                 print(f"[clickhouse-backup] Backup for table '{table}' failed with error: {e}", file=sys.stderr)
                 webhook(f"Backup of ClickHouse table `{config.CLICKHOUSE_DATABASE}.{table}` failed.")
 
-        if config.RETENTION_PERIOD:
+        if config.RETENTION_PERIOD.strip():
             try:
                 retention_date = datetime.datetime.now(datetime.timezone.utc) - utils.string_to_timedelta(config.RETENTION_PERIOD)
                 backups = minio.list_objects(config.MINIO_BUCKET, prefix=f"{config.MINIO_PATH}/", recursive=True)
