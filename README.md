@@ -36,7 +36,7 @@ To disable this feature, leave `RETENTION_PERIOD` empty.
 
 `CLICKHOUSE_TABLES` can be used to specify the tables to back up (see [Backup Settings](#backup-settings)).
 
-Backups will be stored under the specified `MINIO_PATH` in the bucket `MINIO_BUCKET`, with filenames in the format `<database>_<table>_<strategy>_YYYYMMDD_HHMMSS.<format>`.
+Backups will be stored under the specified `MINIO_PATH` in the bucket `MINIO_BUCKET`, with filenames in the format `<database>_<table>_<strategy>_yyyymmdd_HHMMSS.<format>`.
 
 When setting `DISCORD_WEBHOOK_URL`, a notification will be sent to the specified Discord webhook if the backup fails.
 

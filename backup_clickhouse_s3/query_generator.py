@@ -55,7 +55,7 @@ def _format_bounds(ts_format: TimeStampFormat, start: datetime, end: datetime) -
             return start_epoch, end_epoch, "UInt32"
 
         case "DT":
-            return start.strftime("%Y-%m-%d %H:%M:%S"), end.strftime("%Y-%m-%d %H:%M:%S"), "String"
+            return start, end, "DateTime"
 
     raise ValueError(f"Unsupported timestamp format: {ts_format}.")
 
@@ -77,7 +77,7 @@ def strategy_to_query(strategy: Strategy, table: str, ts_column: str, ts_format:
     output_format = config.SUPPORTED_FORMATS[backup_format][0]
     file_extension = config.SUPPORTED_FORMATS[backup_format][1].lower()
 
-    backup_timestamp = datetime.now(timezone.utc).strftime("%Y%m%d_%H%M")
+    backup_timestamp = datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")
 
     minio_uri = f"{config.MINIO_ENDPOINT}/{config.MINIO_BUCKET}/{config.MINIO_PATH}/{database}_{table}_{strategy}_{backup_timestamp}.{file_extension}"
 
