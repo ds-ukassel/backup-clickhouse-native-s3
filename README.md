@@ -4,20 +4,19 @@ Simple script for backing up clickhouse tables to an S3 (minio) bucket using dif
 # Configuration
 
 ```bash
-# Required environment variables
 CLICKHOUSE_HOST='localhost'
 CLICKHOUSE_PORT=8123 # HTTP Port
 CLICKHOUSE_USER='default'
 CLICKHOUSE_PASSWORD='password'
 CLICKHOUSE_DATABASE='default'
-CLICKHOUSE_TABLES='[{ table: "table1", strategy: "week", ts_column: "created_at", ts_format: "DT", backup_format: "jsonl" }]'
+CLICKHOUSE_TABLES=''
 
 MINIO_ENDPOINT='http://localhost:9100'
 MINIO_ACCESS_KEY='minioadmin'
 MINIO_SECRET_KEY='minioadmin'
 MINIO_BUCKET='clickhouse-backups'
 MINIO_PATH='clickhouse-backups'
-MINIO_SECURE=false # Automatically enabled if the endpoint starts with https://
+MINIO_SECURE=false # Automatically enabled if the endpoint starts with 'https://'
 
 RETENTION_PERIOD=7d
 DISCORD_WEBHOOK_URL=''

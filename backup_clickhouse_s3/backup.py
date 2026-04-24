@@ -23,9 +23,14 @@ def webhook(message: str) -> None:
 def main() -> None:
     try:
 
+        if not all([config.MINIO_ENDPOINT, config.MINIO_ACCESS_KEY, config.MINIO_SECRET_KEY, config.MINIO_BUCKET]):
+            raise ValueError("Incomplete MinIO configuration. Check your environment variables.")
+
+        if not all([config.CLICKHOUSE_HOST, config.CLICKHOUSE_USER, config.CLICKHOUSE_PASSWORD, config.CLICKHOUSE_DATABASE]):
+            raise ValueError("Incomplete ClickHouse configuration. Check your environment variables.")
+
         if not config.CLICKHOUSE_TABLES.strip():
-            print("[clickhouse-backup] No tables specified for backup.", file=sys.stderr)
-            raise ValueError("CLICKHOUSE_TABLES environment variable is empty.")
+            raise ValueError("No tables specified for backup in CLICKHOUSE_TABLES environment variable.")
 
         # Create Minio Client
         try:
@@ -36,7 +41,6 @@ def main() -> None:
                 secure=config.MINIO_SECURE
             )
         except Exception as e:
-            print(f"[clickhouse-backup] Failed to create MinIO client: {e}", file=sys.stderr)
             raise ValueError("Failed to create MinIO client. Check your MinIO configuration.") from e
 
         # Create ClickHouse client
@@ -49,7 +53,6 @@ def main() -> None:
                 database=config.CLICKHOUSE_DATABASE
             )
         except Exception as e:
-            print(f"[clickhouse-backup] Failed to create ClickHouse client: {e}", file=sys.stderr)
             raise ValueError("Failed to create ClickHouse client. Check your ClickHouse configuration.") from e
 
         # Create bucket if it doesn't exist
@@ -61,7 +64,6 @@ def main() -> None:
             if not isinstance(tables, list):
                 raise ValueError("Must be a YAML array of table entries.")
         except Exception as e:
-            print(f"[clickhouse-backup] Error parsing CLICKHOUSE_TABLES: {e}", file=sys.stderr)
             webhook("Backup process failed due to invalid tables configuration.")
             raise ValueError("Invalid CLICKHOUSE_TABLES configuration. Must be a YAML array of table entries.") from e
 
@@ -117,7 +119,6 @@ def main() -> None:
                 webhook("Retention cleanup failed.")
 
     except Exception as e:
-        print(f"[clickhouse-backup] {type(e).__name__}: {e}", file=sys.stderr)
+        print(f"[clickhouse-backup] {e}", file=sys.stderr)
         webhook(f"Backup process failed.")
-        traceback.print_exc()
         sys.exit(1)
