@@ -22,7 +22,7 @@ def main() -> None:
 
         if not config.CLICKHOUSE_TABLES.strip():
             print("[clickhouse-backup] No tables specified for backup.", file=sys.stderr)
-            exit(1)
+            raise ValueError("CLICKHOUSE_TABLES environment variable is empty.")
 
         # Create Minio Client
         try:
@@ -34,7 +34,7 @@ def main() -> None:
             )
         except Exception as e:
             print(f"[clickhouse-backup] Failed to create MinIO client: {e}", file=sys.stderr)
-            exit(1)
+            raise ValueError("Failed to create MinIO client. Check your MinIO configuration.") from e
 
         # Create ClickHouse client
         try:
@@ -47,7 +47,7 @@ def main() -> None:
             )
         except Exception as e:
             print(f"[clickhouse-backup] Failed to create ClickHouse client: {e}", file=sys.stderr)
-            exit(1)
+            raise ValueError("Failed to create ClickHouse client. Check your ClickHouse configuration.") from e
 
         # Create bucket if it doesn't exist
         if not minio.bucket_exists(config.MINIO_BUCKET):
@@ -60,7 +60,7 @@ def main() -> None:
         except Exception as e:
             print(f"[clickhouse-backup] Error parsing CLICKHOUSE_TABLES: {e}", file=sys.stderr)
             webhook("Backup process failed due to invalid tables configuration.")
-            exit(1)
+            raise ValueError("Invalid CLICKHOUSE_TABLES configuration. Must be a YAML array of table entries.") from e
 
         # Go through all entries
         for entry in tables:
@@ -117,4 +117,4 @@ def main() -> None:
         print(f"[clickhouse-backup] {type(e).__name__}: {e}", file=sys.stderr)
         webhook(f"Backup process failed.")
         traceback.print_exc()
-        exit(1)
+        sys.exit(1)
