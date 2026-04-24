@@ -15,7 +15,10 @@ from backup_clickhouse_s3.query_generator import strategy_to_query
 
 def webhook(message: str) -> None:
     if config.DISCORD_WEBHOOK_URL:
-        DiscordWebhook(url=config.DISCORD_WEBHOOK_URL, rate_limit_retry=True, content=message).execute()
+        try:
+            DiscordWebhook(url=config.DISCORD_WEBHOOK_URL, rate_limit_retry=True, content=message).execute()
+        except Exception as e:
+            print(f"[clickhouse-backup] Failed to send Discord webhook: {e}", file=sys.stderr)
 
 def main() -> None:
     try:
