@@ -2,7 +2,7 @@ import re
 from datetime import timedelta
 
 
-TIME_REGEX = r"^(\d+y)?\s*(\d+m)?\s*(\d+d)?\s*(\d+H)?\s*(\d+M)?\s*(\d+S)?$"
+TIME_REGEX = r"^(\d+y)?\s*(\d+m)?\s*(\d+d)?\s*(\d+[Hh])?\s*(\d+M)?\s*(\d+[Ss])?$"
 
 
 def string_to_timedelta(time_str: str) -> timedelta:
