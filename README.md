@@ -30,7 +30,7 @@ When running the script, it will connect to the specified clickhouse database, c
 
 It will also remove backups older than the specified time period defined by `RETENTION_PERIOD`.
 To specify a date, use a string like `1y 1m 1d 12H 30M 10S` (1 year, 1 month, 1 day, 12 hours, 30 minutes and 10 seconds).
-A year is considered as 365 days and a month is considered as 30 days.s
+A year is considered as 365 days and a month is considered as 30 days.
 
 To disable this feature, leave `RETENTION_PERIOD` empty.
 
