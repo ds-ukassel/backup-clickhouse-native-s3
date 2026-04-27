@@ -68,10 +68,13 @@ def main() -> None:
 
         # Go through all entries
         for entry in tables:
-            if not isinstance(entry, dict):
-                print(f"[clickhouse-backup] Invalid table entry (not an object): {entry}", file=sys.stderr)
+            if not (isinstance(entry, dict) or isinstance(entry, str)):
+                print(f"[clickhouse-backup] Invalid table entry (not an object or table name): {entry}", file=sys.stderr)
                 webhook(f"Backup of entry `{entry}` failed due to invalid configuration.")
                 continue
+
+            if isinstance(entry, str):
+                entry = {"table": entry}
 
             # Extract settings
             table = entry.get("table", "")

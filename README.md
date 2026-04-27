@@ -42,6 +42,7 @@ When setting `DISCORD_WEBHOOK_URL`, a notification will be sent to the specified
 ## Backup Settings
 
 The tables and their corresponding backup settings are provided by the `CLICKHOUSE_TABLES` environment variable as a YAML list of objects.
+Alternatively you can simply provide the name as a string, which will be treated as a full backup of the table with the default backup format.
 
 ```yaml
 - table: "table1"
@@ -52,6 +53,8 @@ The tables and their corresponding backup settings are provided by the `CLICKHOU
 
 - table: "table2"
   backup_format: "CSV"
+
+- table3
 ```
 
 For each entry, the `table` field is required.
