@@ -79,7 +79,8 @@ def strategy_to_query(strategy: Strategy, table: str, ts_column: str, ts_format:
 
     backup_timestamp = datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")
 
-    minio_uri = f"{config.MINIO_ENDPOINT}/{config.MINIO_BUCKET}/{config.MINIO_PATH}/{database}_{table}_{strategy}_{backup_timestamp}.{file_extension}"
+    prefix = "" if (config.MINIO_ENDPOINT.startswith("https://") or config.MINIO_ENDPOINT.startswith("http://")) else ("https://" if config.MINIO_SECURE else "http://")
+    minio_uri = f"{prefix}{config.MINIO_ENDPOINT}/{config.MINIO_BUCKET}/{config.MINIO_PATH}/{database}_{table}_{strategy}_{backup_timestamp}.{file_extension}"
 
     params = {
         "minio_uri": minio_uri,
