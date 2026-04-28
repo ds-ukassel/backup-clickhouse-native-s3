@@ -12,7 +12,7 @@ MINIO_ACCESS_KEY = os.getenv("MINIO_ACCESS_KEY")
 MINIO_SECRET_KEY = os.getenv("MINIO_SECRET_KEY")
 MINIO_BUCKET = os.getenv("MINIO_BUCKET")
 MINIO_PATH = os.getenv("MINIO_PATH", "backups")
-MINIO_SECURE = (os.getenv("MINIO_SECURE", "False").lower() in ("true", "1", "enabled")) or MINIO_ENDPOINT.startswith("https://")
+MINIO_SECURE = (os.getenv("MINIO_SECURE", "False").lower() in ("true", "1", "enabled")) or (MINIO_ENDPOINT or "").startswith("https://")
 
 RETENTION_PERIOD = os.getenv("RETENTION_PERIOD")
 
