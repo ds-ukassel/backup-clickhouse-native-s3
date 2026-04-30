@@ -3,7 +3,7 @@ from datetime import timedelta
 
 
 TIME_REGEX = r"^(\d+y)?\s*(\d+m)?\s*(\d+d)?\s*(\d+[Hh])?\s*(\d+M)?\s*(\d+[Ss])?$"
-
+CLICKHOUSE_IDENTIFIER_REGEX = re.compile(r"^[a-zA-Z_][a-zA-Z0-9_-]*$")
 
 def string_to_timedelta(time_str: str) -> timedelta:
     """
@@ -30,3 +30,12 @@ def string_to_timedelta(time_str: str) -> timedelta:
         minutes=minutes,
         seconds=seconds
     )
+
+def is_identifier(name: str) -> bool:
+    """
+    Checks if a given string is a valid ClickHouse identifier (e.g. for table or column names).
+    Valid identifiers start with a letter or underscore, followed by letters, digits, underscores, or hyphens.
+    :param name: The string to check.
+    :return: True if the string is a valid identifier, False otherwise.
+    """
+    return bool(CLICKHOUSE_IDENTIFIER_REGEX.match(name))

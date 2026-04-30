@@ -1,13 +1,10 @@
-import re
 from datetime import datetime, timedelta, timezone
 from typing import Literal, Tuple, Dict, Any
 
-from backup_clickhouse_s3 import config
+from backup_clickhouse_s3 import config, utils
 
 Strategy = Literal["FULL", "DAY", "WEEK", "MONTH"]
 TimeStampFormat = Literal["OID", "EPOCH", "DT"]
-
-IDENTIFIER = re.compile(r"^[a-zA-Z_][a-zA-Z0-9_-]*$")
 
 def date_to_epoch_seconds(date: datetime) -> int:
     return int(date.timestamp())
@@ -64,14 +61,14 @@ def strategy_to_query(strategy: Strategy, table: str, ts_column: str, ts_format:
     if backup_format not in config.SUPPORTED_FORMATS:
         raise ValueError(f"Unsupported backup format: {backup_format}.")
 
-    if not IDENTIFIER.match(table):
+    if not utils.is_identifier(table):
         raise ValueError(f"Invalid table name: {table}.")
 
-    if ts_column and not IDENTIFIER.match(ts_column):
+    if ts_column and not utils.is_identifier(ts_column):
         raise ValueError(f"Invalid timestamp column name: {ts_column}.")
 
     database = config.CLICKHOUSE_DATABASE
-    if not IDENTIFIER.match(database):
+    if not utils.is_identifier(database):
         raise ValueError(f"Invalid database name: {database}.")
 
     output_format = config.SUPPORTED_FORMATS[backup_format][0]
