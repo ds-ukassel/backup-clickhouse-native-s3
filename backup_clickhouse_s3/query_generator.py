@@ -1,7 +1,7 @@
 from datetime import datetime, timedelta, timezone
 from typing import Literal, Tuple, Dict, Any
 
-from backup_clickhouse_s3 import config, utils
+from backup_clickhouse_s3 import config
 
 Strategy = Literal["FULL", "DAY", "WEEK", "MONTH"]
 TimeStampFormat = Literal["OID", "EPOCH", "DT"]
@@ -57,20 +57,7 @@ def _format_bounds(ts_format: TimeStampFormat, start: datetime, end: datetime) -
     raise ValueError(f"Unsupported timestamp format: {ts_format}.")
 
 
-def strategy_to_query(strategy: Strategy, table: str, ts_column: str, ts_format: TimeStampFormat, backup_format: str) -> Tuple[str, Dict[str, Any]]:
-    if backup_format not in config.SUPPORTED_FORMATS:
-        raise ValueError(f"Unsupported backup format: {backup_format}.")
-
-    if not utils.is_identifier(table):
-        raise ValueError(f"Invalid table name: {table}.")
-
-    if ts_column and not utils.is_identifier(ts_column):
-        raise ValueError(f"Invalid timestamp column name: {ts_column}.")
-
-    database = config.CLICKHOUSE_DATABASE
-    if not utils.is_identifier(database):
-        raise ValueError(f"Invalid database name: {database}.")
-
+def strategy_to_query(strategy: Strategy, database: str, table: str, ts_column: str, ts_format: TimeStampFormat, backup_format: str) -> Tuple[str, Dict[str, Any]]:
     output_format = config.SUPPORTED_FORMATS[backup_format][0]
     file_extension = config.SUPPORTED_FORMATS[backup_format][1].lower()
 

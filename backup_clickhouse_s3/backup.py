@@ -5,31 +5,80 @@ import clickhouse_connect
 import yaml
 from clickhouse_connect.driver import Client
 from clickhouse_connect.driver.exceptions import ClickHouseError
-from discord_webhook import DiscordWebhook
 from minio import Minio
 
 from backup_clickhouse_s3 import config, utils
 from backup_clickhouse_s3.query_generator import strategy_to_query
 
 
-def webhook(message: str) -> None:
-    if config.DISCORD_WEBHOOK_URL:
-        try:
-            DiscordWebhook(url=config.DISCORD_WEBHOOK_URL, rate_limit_retry=True, content=message).execute()
-        except Exception as e:
-            print(f"[clickhouse-backup] Failed to send Discord webhook: {e}", file=sys.stderr)
+def extract_settings(entry: str | dict[str, str]) -> tuple[str, str, str, str, str]:
+    if isinstance(entry, str):
+        entry = {"table": entry}
+
+    table = entry.get("table", "")
+    strategy = entry.get("strategy", "FULL").upper()
+    ts_column = entry.get("ts_column", "")
+    ts_format = entry.get("ts_format", "").upper()
+    backup_format = entry.get("backup_format", config.DEFAULT_BACKUP_FORMAT).upper()
+
+    return table, strategy, ts_column, ts_format, backup_format
+
+
+def check_entries(clickhouse: Client, entries: list[str | dict[str, str]]) -> bool:
+    for entry in entries:
+
+        # Check if table is string or settings object
+        if not isinstance(entry, (str, dict)):
+            print(f"[clickhouse-backup] Invalid table entry (not an object or table name): {entry}", file=sys.stderr)
+            return False
+
+        table, strategy, ts_column, ts_format, backup_format = extract_settings(entry)
+
+        # Check if table is valid and exists
+        if not table:
+            print(f"[clickhouse-backup] Invalid table entry (missing table name): {entry}", file=sys.stderr)
+            return False
+
+        if not utils.table_exists(clickhouse, config.CLICKHOUSE_DATABASE, table):
+            print(f"[clickhouse-backup] Table '{config.CLICKHOUSE_DATABASE}.{table}' does not exist.", file=sys.stderr)
+            return False
+
+        # Check if settings are valid for strategy
+        if strategy != "FULL" and (not ts_column or not ts_format):
+            print(f"[clickhouse-backup] Error: For strategy {strategy} you must specify 'ts_column' and 'ts_format'.", file=sys.stderr)
+            return False
+
+        if backup_format not in config.SUPPORTED_FORMATS:
+            print(f"[clickhouse-backup] Unsupported backup format '{backup_format}' for table '{table}'. Supported formats are: {', '.join(config.SUPPORTED_FORMATS.keys())}.", file=sys.stderr)
+            return False
+
+    return True
+
 
 def main() -> None:
     try:
-
+        # Check if required config options are set
         if not all([config.MINIO_ENDPOINT, config.MINIO_ACCESS_KEY, config.MINIO_SECRET_KEY, config.MINIO_BUCKET]):
-            raise ValueError("Incomplete MinIO configuration. Check your environment variables.")
+            print("[clickhouse-backup] Incomplete MinIO configuration. Check your environment variables.", file=sys.stderr)
+            utils.webhook("Backup process failed due to incomplete MinIO configuration.")
+            sys.exit(1)
 
         if not all([config.CLICKHOUSE_HOST, config.CLICKHOUSE_USER, config.CLICKHOUSE_PASSWORD, config.CLICKHOUSE_DATABASE]):
-            raise ValueError("Incomplete ClickHouse configuration. Check your environment variables.")
+            print("[clickhouse-backup] Incomplete ClickHouse configuration. Check your environment variables.", file=sys.stderr)
+            utils.webhook("Backup process failed due to incomplete ClickHouse configuration.")
+            sys.exit(1)
 
         if not config.CLICKHOUSE_TABLES.strip():
-            raise ValueError("No tables specified for backup in CLICKHOUSE_TABLES environment variable.")
+            print("[clickhouse-backup] No tables specified for backup.", file=sys.stderr)
+            utils.webhook("Backup process stopped due to missing tables configuration.")
+            sys.exit(0)
+
+        # Check if database is a valid identifier
+        database = config.CLICKHOUSE_DATABASE
+        if not utils.is_identifier(database):
+            print(f"[clickhouse-backup] Invalid database name: {database}.", file=sys.stderr)
+            utils.webhook("Backup process failed due to invalid database name.")
+            sys.exit(1)
 
         # Create Minio Client
         try:
@@ -40,7 +89,9 @@ def main() -> None:
                 secure=config.MINIO_SECURE
             )
         except Exception as e:
-            raise ValueError("Failed to create MinIO client. Check your MinIO configuration.") from e
+            print("[clickhouse-backup] Failed to create MinIO client. Check your MinIO configuration.", file=sys.stderr)
+            utils.webhook("Backup process failed due to invalid MinIO configuration.")
+            sys.exit(1)
 
         # Create ClickHouse client
         try:
@@ -52,61 +103,52 @@ def main() -> None:
                 database=config.CLICKHOUSE_DATABASE
             )
         except Exception as e:
-            raise ValueError("Failed to create ClickHouse client. Check your ClickHouse configuration.") from e
+            print(f"[clickhouse-backup] Failed to create ClickHouse client. Check your ClickHouse configuration: {e}", file=sys.stderr)
+            utils.webhook("Backup process failed due to invalid ClickHouse configuration.")
+            sys.exit(1)
 
         # Create bucket if it doesn't exist
-        if not minio.bucket_exists(config.MINIO_BUCKET):
-            minio.make_bucket(config.MINIO_BUCKET)
-
         try:
-            tables = yaml.safe_load(config.CLICKHOUSE_TABLES)
-            if not isinstance(tables, list):
+            if not minio.bucket_exists(config.MINIO_BUCKET):
+                minio.make_bucket(config.MINIO_BUCKET)
+        except Exception as e:
+            print(f"[clickhouse-backup] Failed to access or create MinIO bucket '{config.MINIO_BUCKET}': {e}", file=sys.stderr)
+            utils.webhook("Backup process failed due to MinIO bucket access issues.")
+            sys.exit(1)
+
+        # Load table configuration
+        try:
+            entries = yaml.safe_load(config.CLICKHOUSE_TABLES)
+            if not isinstance(entries, list):
                 raise ValueError("Must be a YAML array of table entries.")
         except Exception as e:
-            webhook("Backup process failed due to invalid tables configuration.")
-            raise ValueError("Invalid CLICKHOUSE_TABLES configuration. Must be a YAML array of table entries.") from e
+            print(f"[clickhouse-backup] Failed to parse CLICKHOUSE_TABLES: {e}", file=sys.stderr)
+            utils.webhook("Backup process failed due to invalid table configuration.")
+            sys.exit(1)
+
+        # Check if tables are valid and exist
+        if not check_entries(clickhouse, entries):
+            utils.webhook("Backup process failed due to invalid table configuration.") # Webhook is enough, prints are done in check_entries
+            sys.exit(1)
 
         # Go through all entries
-        for entry in tables:
-            if not isinstance(entry, (str, dict)):
-                print(f"[clickhouse-backup] Invalid table entry (not an object or table name): {entry}", file=sys.stderr)
-                webhook(f"Backup of entry `{entry}` failed due to invalid configuration.")
-                continue
+        for entry in entries:
 
-            if isinstance(entry, str):
-                entry = {"table": entry}
+            # Get settings from entry
+            table, strategy, ts_column, ts_format, backup_format = extract_settings(entry)
 
-            # Extract settings
-            table = entry.get("table", "")
-            strategy = entry.get("strategy", "FULL").upper()
-            ts_column = entry.get("ts_column", "")
-            ts_format = entry.get("ts_format", "").upper()
-            backup_format = entry.get("backup_format", config.DEFAULT_BACKUP_FORMAT).upper()
+            # Generate query
+            query, params = strategy_to_query(strategy, database, table, ts_column, ts_format, backup_format)
 
-            if not table:
-                print(f"[clickhouse-backup] Error: Table name is required in entry: {entry}", file=sys.stderr)
-                webhook(f"Backup of entry `{entry}` failed due to missing table name.")
-                continue
-
-            if strategy != "FULL" and (not ts_column or not ts_format):
-                print(f"[clickhouse-backup] Error: For strategy {strategy} you must specify 'ts_column' and 'ts_format'.", file=sys.stderr)
-                webhook(f"Backup of table `{config.CLICKHOUSE_DATABASE}.{table}` failed due to missing settings.")
-                continue
-
-            try:
-                query, params = strategy_to_query(strategy, table, ts_column, ts_format, backup_format)
-            except Exception as e:
-                print(f"[clickhouse-backup] Error generating query for table '{table}': {e}", file=sys.stderr)
-                webhook(f"Backup of table `{config.CLICKHOUSE_DATABASE}.{table}` failed due to invalid settings.")
-                continue
-
+            # Execute backup
             print(f"[clickhouse-backup] Executing backup for table '{table}' with strategy '{strategy}' and backup format '{backup_format}'...")
             try:
-                clickhouse.command(cmd=query, parameters=params)
+                utils.retry_and_wait(function=clickhouse.command, retry_on=ClickHouseError, retries=3, cmd=query, parameters=params)
                 print(f"[clickhouse-backup] Backup for table '{table}' completed successfully.")
             except ClickHouseError as e:
                 print(f"[clickhouse-backup] Backup for table '{table}' failed with error: {e}", file=sys.stderr)
-                webhook(f"Backup of ClickHouse table `{config.CLICKHOUSE_DATABASE}.{table}` failed.")
+                utils.webhook(f"Backup of ClickHouse table `{config.CLICKHOUSE_DATABASE}.{table}` failed.")
+                sys.exit(1)
 
         if (config.RETENTION_PERIOD or "").strip():
             try:
@@ -118,9 +160,9 @@ def main() -> None:
                         print(f"[clickhouse-backup] Deleted old backup: {backup.object_name}")
             except Exception as e:
                 print(f"[clickhouse-backup] Error during retention cleanup: {e}", file=sys.stderr)
-                webhook("Retention cleanup failed.")
+                utils.webhook("Retention cleanup failed.")
 
     except Exception as e:
         print(f"[clickhouse-backup] {e}", file=sys.stderr)
-        webhook(f"Backup process failed.")
+        utils.webhook(f"Backup process failed.")
         sys.exit(1)
