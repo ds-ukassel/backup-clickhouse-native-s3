@@ -58,7 +58,7 @@ def table_exists(clickhouse: Client, database: str, table: str) -> bool:
         raise ValueError(f"Invalid database or table name: {database}.{table}.")
 
     try:
-        return clickhouse.command(f"EXISTS TABLE {database}.{table}") == 1
+        return clickhouse.command(f"EXISTS TABLE \"{database}\".\"{table}\"") == 1
     except Exception:
         return False
 
