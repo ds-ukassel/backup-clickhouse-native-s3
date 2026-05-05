@@ -1,5 +1,6 @@
 import re
 import sys
+import time
 from datetime import timedelta
 from typing import Callable, Any, Tuple, Type
 
@@ -10,6 +11,7 @@ from backup_clickhouse_s3 import config
 
 TIME_REGEX = r"^(\d+y)?\s*(\d+m)?\s*(\d+d)?\s*(\d+[Hh])?\s*(\d+M)?\s*(\d+[Ss])?$"
 CLICKHOUSE_IDENTIFIER_REGEX = re.compile(r"^[a-zA-Z_][a-zA-Z0-9_-]*$")
+
 
 def string_to_timedelta(time_str: str) -> timedelta:
     """
@@ -37,6 +39,7 @@ def string_to_timedelta(time_str: str) -> timedelta:
         seconds=seconds
     )
 
+
 def is_identifier(name: str) -> bool:
     """
     Checks if a given string is a valid ClickHouse identifier (e.g. for table or column names).
@@ -45,6 +48,7 @@ def is_identifier(name: str) -> bool:
     :return: True if the string is a valid identifier, False otherwise.
     """
     return bool(CLICKHOUSE_IDENTIFIER_REGEX.match(name))
+
 
 def table_exists(clickhouse: Client, database: str, table: str) -> bool:
     """
@@ -62,9 +66,11 @@ def table_exists(clickhouse: Client, database: str, table: str) -> bool:
     except Exception:
         return False
 
+
 def retry_and_wait(
         function: Callable[..., Any],
         retries: int = 3,
+        delay: Callable[[int], float] = lambda attempt: (2 ** attempt),
         retry_on: Tuple[Type[Exception], ...] | Type[Exception] = (Exception,),
         *args,
         **kwargs,
@@ -73,6 +79,7 @@ def retry_and_wait(
     Retry a function call with a delay between attempts.
     :param function: The function to be called.
     :param retries: Number of retry attempts. Defaults to 3.
+    :param delay: A callable that takes the attempt number and returns the delay in seconds. Defaults to exponential backoff (2^attempt seconds).
     :param retry_on: A tuple of exception types to catch and retry on. Defaults to all Exceptions.
     :param args: Positional arguments to pass to the function.
     :param kwargs: Keyword arguments to pass to the function.
@@ -85,8 +92,10 @@ def retry_and_wait(
         except retry_on:
             if attempt == retries - 1:
                 raise
+            time.sleep(delay(attempt))
 
     return function(*args, **kwargs)
+
 
 def webhook(message: str) -> None:
     if config.DISCORD_WEBHOOK_URL:
