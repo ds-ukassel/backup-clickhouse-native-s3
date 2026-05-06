@@ -11,7 +11,7 @@ CLICKHOUSE_PASSWORD='password'
 CLICKHOUSE_DATABASE='default'
 CLICKHOUSE_TABLES=''
 
-MINIO_ENDPOINT='http://localhost:9100'
+MINIO_ENDPOINT='http://minio:9100'
 MINIO_ACCESS_KEY='minioadmin'
 MINIO_SECRET_KEY='minioadmin'
 MINIO_BUCKET='clickhouse-backups'
