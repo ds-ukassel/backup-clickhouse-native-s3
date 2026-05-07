@@ -102,7 +102,7 @@ def main() -> None:
                 secure=config.MINIO_SECURE
             )
         except Exception as e:
-            print("[clickhouse-backup] Failed to create MinIO client. Check your MinIO configuration.", file=sys.stderr)
+            print(f"[clickhouse-backup] Failed to create MinIO client. Check your MinIO configuration: {e}", file=sys.stderr)
             utils.webhook("Backup process failed due to invalid MinIO configuration.")
             sys.exit(1)
 
