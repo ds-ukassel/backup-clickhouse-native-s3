@@ -14,7 +14,7 @@ def epoch_to_oid(epoch_seconds: int) -> str:
     return f"{epoch_seconds:08x}0000000000000000"
 
 
-def _resolve_date_range(strategy: Strategy) -> Tuple[datetime, datetime] | None:
+def _resolve_date_range(strategy: Strategy) -> Tuple[datetime, datetime]:
     now = datetime.now(timezone.utc)
     today_midnight = now.replace(hour=0, minute=0, second=0, microsecond=0)
 
@@ -33,9 +33,6 @@ def _resolve_date_range(strategy: Strategy) -> Tuple[datetime, datetime] | None:
             last_prev_month = first_this_month - timedelta(days=1)
             start = last_prev_month.replace(day=1)
             return start, first_this_month
-
-        case "FULL":
-            return None
 
     raise ValueError(f"Unsupported strategy: {strategy}.")
 

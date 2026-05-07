@@ -1,5 +1,6 @@
 import datetime
 import sys
+from typing import cast
 
 import clickhouse_connect
 import yaml
@@ -8,7 +9,7 @@ from clickhouse_connect.driver.exceptions import ClickHouseError
 from minio import Minio
 
 from backup_clickhouse_s3 import config, utils
-from backup_clickhouse_s3.query_generator import strategy_to_query
+from backup_clickhouse_s3.query_generator import strategy_to_query, Strategy, TimeStampFormat
 
 
 def extract_settings(entry: str | dict[str, str]) -> tuple[str, str, str, str, str]:
@@ -149,8 +150,8 @@ def main() -> None:
             # Get settings from entry
             table, strategy, ts_column, ts_format, backup_format = extract_settings(entry)
 
-            # Generate query
-            query, params = strategy_to_query(strategy, database, table, ts_column, ts_format, backup_format)
+            # Generate query (at this point, the settings are checked, so we can cast without issues)
+            query, params = strategy_to_query(cast(Strategy, strategy), database, table, ts_column, cast(TimeStampFormat, ts_format), backup_format)
 
             # Execute backup
             print(f"[clickhouse-backup] Executing backup for table '{table}' with strategy '{strategy}' and backup format '{backup_format}'...")
@@ -162,7 +163,7 @@ def main() -> None:
                 utils.webhook(f"Backup of ClickHouse table `{config.CLICKHOUSE_DATABASE}.{table}` failed.")
                 sys.exit(1)
 
-        if (config.RETENTION_PERIOD or "").strip():
+        if config.RETENTION_PERIOD.strip():
             try:
                 retention_date = datetime.datetime.now(datetime.timezone.utc) - utils.string_to_timedelta(config.RETENTION_PERIOD)
                 backups = minio.list_objects(config.MINIO_BUCKET, prefix=f"{config.MINIO_PATH}/", recursive=True)
