@@ -40,7 +40,7 @@ def check_entries(clickhouse: Client, entries: list[str | dict[str, str]]) -> bo
             print(f"[clickhouse-backup] Invalid table entry (missing table name): {entry}", file=sys.stderr)
             return False
 
-        if not utils.is_identifier(table) or not utils.is_identifier(ts_column):
+        if strategy != "FULL" and (not utils.is_identifier(table) or not utils.is_identifier(ts_column)):
             print(f"[clickhouse-backup] Invalid table or timestamp column name in entry: {entry}.", file=sys.stderr)
             return False
 
