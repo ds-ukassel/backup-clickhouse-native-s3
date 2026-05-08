@@ -40,21 +40,17 @@ def check_entries(clickhouse: Client, entries: list[str | dict[str, str]]) -> bo
             print(f"[clickhouse-backup] Invalid table entry (missing table name): {entry}", file=sys.stderr)
             return False
 
-        if strategy != "FULL" and (not utils.is_identifier(table) or not utils.is_identifier(ts_column)):
-            print(f"[clickhouse-backup] Invalid table or timestamp column name in entry: {entry}.", file=sys.stderr)
-            return False
-
         if not utils.table_exists(clickhouse, config.CLICKHOUSE_DATABASE, table):
             print(f"[clickhouse-backup] Table '{config.CLICKHOUSE_DATABASE}.{table}' does not exist.", file=sys.stderr)
             return False
 
-        # Check if settings are valid for strategy
-        if strategy != "FULL" and (not ts_column or not ts_format):
-            print(f"[clickhouse-backup] Error: For strategy {strategy} you must specify 'ts_column' and 'ts_format'.", file=sys.stderr)
-            return False
-
         if strategy not in ("FULL", "DAY", "WEEK", "MONTH"):
             print(f"[clickhouse-backup] Unsupported strategy '{strategy}' for table '{table}'.", file=sys.stderr)
+            return False
+
+        # Check if settings are valid for strategy
+        if strategy != "FULL" and (not utils.is_identifier(table) or not utils.is_identifier(ts_column)):
+            print(f"[clickhouse-backup] Error: For strategy {strategy} you must specify valid 'ts_column' and 'ts_format'.", file=sys.stderr)
             return False
 
         if ts_format and ts_format not in ("OID", "EPOCH", "DT"):
