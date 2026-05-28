@@ -36,7 +36,7 @@ def check_entries(clickhouse: Client, entries: list[str | dict[str, str]]) -> bo
         table, strategy, ts_column, ts_format, backup_format = extract_settings(entry)
 
         # Check if table is valid and exists
-        if not table:
+        if not table or not utils.is_identifier(table):
             print(f"[clickhouse-backup] Invalid table entry (missing table name): {entry}", file=sys.stderr)
             return False
 
@@ -49,8 +49,12 @@ def check_entries(clickhouse: Client, entries: list[str | dict[str, str]]) -> bo
             return False
 
         # Check if settings are valid for strategy
-        if strategy != "FULL" and (not utils.is_identifier(table) or not utils.is_identifier(ts_column)):
-            print(f"[clickhouse-backup] Error: For strategy {strategy} you must specify valid 'ts_column' and 'ts_format'.", file=sys.stderr)
+        if strategy != "FULL" and (not ts_column or not ts_format):
+            print(f"[clickhouse-backup] For strategy {strategy} you must specify 'ts_column' and 'ts_format'.", file=sys.stderr)
+            return False
+
+        if ts_column and not utils.is_identifier(ts_column):
+            print(f"[clickhouse-backup] Invalid timestamp column '{ts_column}' for table '{table}'.", file=sys.stderr)
             return False
 
         if ts_format and ts_format not in ("OID", "EPOCH", "DT"):
