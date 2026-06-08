@@ -1,0 +1,5 @@
+.venv/
+.env
+.ruff_cache/
+Dockerfile
+docker-compose.yaml
