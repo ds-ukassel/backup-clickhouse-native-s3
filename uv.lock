@@ -58,6 +58,7 @@ dependencies = [
     { name = "discord-webhook" },
     { name = "minio" },
     { name = "pyyaml" },
+    { name = "timedeltaparse" },
 ]
 
 [package.metadata]
@@ -66,6 +67,7 @@ requires-dist = [
     { name = "discord-webhook", specifier = "~=1.4.1" },
     { name = "minio", specifier = "~=7.2.15" },
     { name = "pyyaml", specifier = "~=6.0.0" },
+    { name = "timedeltaparse", specifier = ">=0.0.1" },
 ]
 
 [[package]]
@@ -384,6 +386,15 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/5f/a4/98b9c7c6428a668bf7e42ebb7c79d576a1c3c1e3ae2d47e674b468388871/requests-2.33.1.tar.gz", hash = "sha256:18817f8c57c6263968bc123d237e3b8b08ac046f5456bd1e307ee8f4250d3517", size = 134120, upload-time = "2026-03-30T16:09:15.531Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/d7/8e/7540e8a2036f79a125c1d2ebadf69ed7901608859186c856fa0388ef4197/requests-2.33.1-py3-none-any.whl", hash = "sha256:4e6d1ef462f3626a1f0a0a9c42dd93c63bad33f9f1c1937509b8c5c8718ab56a", size = 64947, upload-time = "2026-03-30T16:09:13.83Z" },
+]
+
+[[package]]
+name = "timedeltaparse"
+version = "0.0.1"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/38/f5/4853da3283da614be64781f89bba47b8bc6793b0ea5ebc3a68fbac82116d/timedeltaparse-0.0.1.tar.gz", hash = "sha256:cf951345a11f73a3eef25902eea51a8cf76f9d7cfedbda33c035d3fcc5ea8d8e", size = 6420, upload-time = "2026-05-22T13:07:55.983Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/09/44/2571f49b3e3548bde2f5da3739b9e2499d5957a300cf2010ef9cf8c710fc/timedeltaparse-0.0.1-py3-none-any.whl", hash = "sha256:2c25eff6b133df38ef2d09499ba80afdadba54bac59bfea69dc9d3a85aa4221b", size = 3213, upload-time = "2026-05-22T13:07:56.963Z" },
 ]
 
 [[package]]

@@ -7,6 +7,7 @@ import yaml
 from clickhouse_connect.driver import Client
 from clickhouse_connect.driver.exceptions import ClickHouseError
 from minio import Minio
+from timedeltaparse import timedeltaparse
 
 from backup_clickhouse_s3 import config, utils
 from backup_clickhouse_s3.query_generator import strategy_to_query, Strategy, TimeStampFormat
@@ -33,11 +34,16 @@ def check_entries(clickhouse: Client, entries: list[str | dict[str, str]]) -> bo
             print(f"[clickhouse-backup] Invalid table entry (not an object or table name): {entry}", file=sys.stderr)
             return False
 
+        # Check if dictionary only contains string values
+        if isinstance(entry, dict) and not all(isinstance(value, str) for value in entry.values()):
+            print(f"[clickhouse-backup] Invalid table entry (all settings must be strings): {entry}", file=sys.stderr)
+            return False
+
         table, strategy, ts_column, ts_format, backup_format = extract_settings(entry)
 
         # Check if table is valid and exists
         if not table or not utils.is_identifier(table):
-            print(f"[clickhouse-backup] Invalid table entry (missing table name): {entry}", file=sys.stderr)
+            print(f"[clickhouse-backup] Invalid table entry (missing/invalid table name): {entry}", file=sys.stderr)
             return False
 
         if not utils.table_exists(clickhouse, config.CLICKHOUSE_DATABASE, table):
@@ -165,7 +171,7 @@ def main() -> None:
 
         if config.RETENTION_PERIOD.strip():
             try:
-                retention_date = datetime.datetime.now(datetime.timezone.utc) - utils.string_to_timedelta(config.RETENTION_PERIOD)
+                retention_date = datetime.datetime.now(datetime.timezone.utc) - timedeltaparse.parse_delta(config.RETENTION_PERIOD)
                 backups = minio.list_objects(config.MINIO_BUCKET, prefix=f"{config.MINIO_PATH}/", recursive=True)
                 for backup in backups:
                     if backup.last_modified < retention_date:
