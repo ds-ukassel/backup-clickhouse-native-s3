@@ -58,7 +58,18 @@ def strategy_to_query(strategy: Strategy, database: str, table: str, ts_column: 
     output_format = config.SUPPORTED_FORMATS[backup_format][0]
     file_extension = config.SUPPORTED_FORMATS[backup_format][1].lower()
 
-    backup_timestamp = datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")
+    match strategy:
+        case "FULL":
+            backup_timestamp = datetime.now(timezone.utc).strftime("%Y-%m-%d_%H-%M-%S")
+        case "MONTH":
+            backup_timestamp = (datetime.now(timezone.utc) - timedelta(days=30)).strftime("%Y-%m")
+        case "WEEK":
+            backup_timestamp = (datetime.now(timezone.utc) - timedelta(days=7)).strftime("%Y-%m-%d")
+        case "DAY":
+            backup_timestamp = (datetime.now(timezone.utc) - timedelta(days=1)).strftime("%Y-%m-%d")
+        case _:
+            raise ValueError(f"Unsupported strategy: {strategy}.")
+
 
     prefix = "" if (config.MINIO_ENDPOINT.startswith("https://") or config.MINIO_ENDPOINT.startswith("http://")) else ("https://" if config.MINIO_SECURE else "http://")
     minio_uri = f"{prefix}{config.MINIO_ENDPOINT}/{config.MINIO_BUCKET}/{config.MINIO_PATH}/{database}_{table}_{strategy}_{backup_timestamp}.{file_extension}"
