@@ -14,8 +14,7 @@ def epoch_to_oid(epoch_seconds: int) -> str:
     return f"{epoch_seconds:08x}0000000000000000"
 
 
-def _resolve_date_range(strategy: Strategy) -> Tuple[datetime, datetime]:
-    now = datetime.now(timezone.utc)
+def _resolve_date_range(strategy: Strategy, now: datetime = datetime.now(timezone.utc)) -> Tuple[datetime, datetime]:
     today_midnight = now.replace(hour=0, minute=0, second=0, microsecond=0)
 
     match strategy:
@@ -58,18 +57,20 @@ def strategy_to_query(strategy: Strategy, database: str, table: str, ts_column: 
     output_format = config.SUPPORTED_FORMATS[backup_format][0]
     file_extension = config.SUPPORTED_FORMATS[backup_format][1].lower()
 
+    now = datetime.now(timezone.utc)
+
+    if strategy == "FULL":
+        backup_date = now
+    else:
+        backup_date, _ = _resolve_date_range(strategy, now)
+
     match strategy:
         case "FULL":
-            backup_timestamp = datetime.now(timezone.utc).strftime("%Y-%m-%d_%H-%M-%S")
+            backup_timestamp = backup_date.strftime("%Y-%m-%d_%H-%M-%S")
         case "MONTH":
-            backup_timestamp = (datetime.now(timezone.utc) - timedelta(days=30)).strftime("%Y-%m")
-        case "WEEK":
-            today_midnight = datetime.now(timezone.utc).replace(hour=0, minute=0, second=0, microsecond=0)
-            monday = today_midnight - timedelta(days=today_midnight.weekday())
-            last_monday = monday - timedelta(days=7)
-            backup_timestamp = last_monday.strftime("%Y-%m-%d")
-        case "DAY":
-            backup_timestamp = (datetime.now(timezone.utc) - timedelta(days=1)).strftime("%Y-%m-%d")
+            backup_timestamp = backup_date.strftime("%Y-%m")
+        case ("WEEK", "DAY"):
+            backup_timestamp = backup_date.strftime("%Y-%m-%d")
         case _:
             raise ValueError(f"Unsupported strategy: {strategy}.")
 
@@ -98,7 +99,7 @@ def strategy_to_query(strategy: Strategy, database: str, table: str, ts_column: 
             """
 
     if strategy != "FULL":
-        start_datetime, end_datetime = _resolve_date_range(strategy)
+        start_datetime, end_datetime = _resolve_date_range(strategy, now)
         start_timestamp, end_timestamp, timestamp_type = _format_bounds(ts_format, start_datetime, end_datetime)
 
         params.update({
