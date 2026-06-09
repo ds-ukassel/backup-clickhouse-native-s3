@@ -64,7 +64,10 @@ def strategy_to_query(strategy: Strategy, database: str, table: str, ts_column: 
         case "MONTH":
             backup_timestamp = (datetime.now(timezone.utc) - timedelta(days=30)).strftime("%Y-%m")
         case "WEEK":
-            backup_timestamp = (datetime.now(timezone.utc) - timedelta(days=7)).strftime("%Y-%m-%d")
+            today_midnight = datetime.now(timezone.utc).replace(hour=0, minute=0, second=0, microsecond=0)
+            monday = today_midnight - timedelta(days=today_midnight.weekday())
+            last_monday = monday - timedelta(days=7)
+            backup_timestamp = last_monday.strftime("%Y-%m-%d")
         case "DAY":
             backup_timestamp = (datetime.now(timezone.utc) - timedelta(days=1)).strftime("%Y-%m-%d")
         case _:
