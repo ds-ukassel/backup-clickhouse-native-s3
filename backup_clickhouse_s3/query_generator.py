@@ -69,7 +69,7 @@ def strategy_to_query(strategy: Strategy, database: str, table: str, ts_column: 
             backup_timestamp = backup_date.strftime("%Y-%m-%d_%H-%M-%S")
         case "MONTH":
             backup_timestamp = backup_date.strftime("%Y-%m")
-        case ("WEEK", "DAY"):
+        case "WEEK" | "DAY":
             backup_timestamp = backup_date.strftime("%Y-%m-%d")
         case _:
             raise ValueError(f"Unsupported strategy: {strategy}.")
