@@ -1,7 +1,16 @@
 # backup-clickhouse-s3
 Simple script for backing up clickhouse tables to an S3 (minio) bucket using different formats.
 
-# Configuration
+## Usage
+
+- Latest version (Python):
+  - Image: `registry.uni-kassel.dev/backup/clickhouse-native-s3`
+  - Tag: `latest` or `v2`
+- Legacy version (Shell Script):
+  - Docs/source: Git tag `v1`
+  - Image Tag: `v1`
+
+## Configuration
 
 ```bash
 CLICKHOUSE_HOST='localhost'
@@ -23,7 +32,7 @@ DISCORD_WEBHOOK_URL=''
 DEFAULT_BACKUP_FORMAT='NATIVE'
 ```
 
-# Description
+## Description
 
 When running the script, it will connect to the specified clickhouse database, create a backup for each specified table and upload it to the specified S3 bucket.
 
@@ -40,7 +49,7 @@ The `date` will depend on the strategy and include the timestamp of the backup (
 
 When setting `DISCORD_WEBHOOK_URL`, a notification will be sent to the specified Discord webhook if the backup fails.
 
-## Backup Settings
+### Backup Settings
 
 The tables and their corresponding backup settings are provided by the `CLICKHOUSE_TABLES` environment variable as a YAML list of objects.
 Alternatively you can simply provide the name as a string, which will be treated as a full backup of the table with the default backup format.
