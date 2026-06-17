@@ -162,7 +162,14 @@ def main() -> None:
             # Execute backup
             print(f"[clickhouse-backup] Executing backup for table '{table}' with strategy '{strategy}' and backup format '{backup_format}'...")
             try:
-                utils.retry_and_wait(function=clickhouse.command, retry_on=ClickHouseError, retries=3, cmd=query, parameters=params)
+                utils.retry_and_wait(function=clickhouse.command, retry_on=ClickHouseError, retries=3,
+                    cmd=query,
+                    parameters=params,
+                    # Required if the file already exists (overrides it if set to 1).
+                    # See https://clickhouse.com/docs/integrations/s3#inserting-data
+                    # TODO make this configurable
+                    settings={'s3_truncate_on_insert': 1},
+                )
                 print(f"[clickhouse-backup] Backup for table '{table}' completed successfully.")
             except ClickHouseError as e:
                 print(f"[clickhouse-backup] Backup for table '{table}' failed with error: {e}", file=sys.stderr)
