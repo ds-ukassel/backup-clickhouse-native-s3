@@ -167,8 +167,7 @@ def main() -> None:
                     parameters=params,
                     # Required if the file already exists (overrides it if set to 1).
                     # See https://clickhouse.com/docs/integrations/s3#inserting-data
-                    # TODO make this configurable
-                    settings={'s3_truncate_on_insert': 1},
+                    settings={'s3_truncate_on_insert': 1 if config.MINIO_OVERWRITE else 0},
                 )
                 print(f"[clickhouse-backup] Backup for table '{table}' completed successfully.")
             except ClickHouseError as e:
