@@ -13,7 +13,7 @@ MINIO_SECRET_KEY = os.getenv("MINIO_SECRET_KEY", "")
 MINIO_BUCKET = os.getenv("MINIO_BUCKET", "")
 MINIO_PATH = os.getenv("MINIO_PATH", "backups")
 MINIO_SECURE = (os.getenv("MINIO_SECURE", "False").lower() in ("true", "1", "enabled")) or (MINIO_ENDPOINT or "").startswith("https://")
-MINIO_OVERWRITE = (os.getenv("MINIO_OVERWRITE", "False").lower() in ("true", "1", "enabled"))
+MINIO_REPLACE_STRATEGY = os.getenv("MINIO_REPLACE_STRATEGY", "ERROR").upper()
 
 RETENTION_PERIOD = os.getenv("RETENTION_PERIOD", "")
 
