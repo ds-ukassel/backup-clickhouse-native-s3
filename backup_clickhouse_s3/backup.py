@@ -145,6 +145,18 @@ def main() -> None:
             utils.webhook("Backup process failed due to invalid table configuration.")
             sys.exit(1)
 
+        # Check if replacement strategy is valid
+        if config.MINIO_REPLACE_STRATEGY not in ("ERROR", "OVERWRITE", "KEEP_BOTH"):
+            print(f"[clickhouse-backup] Invalid MINIO_REPLACE_STRATEGY: {config.MINIO_REPLACE_STRATEGY}. Supported strategies are: ERROR, OVERWRITE, KEEP_BOTH.", file=sys.stderr)
+            utils.webhook("Backup process failed due to invalid MinIO replacement strategy.")
+            sys.exit(1)
+
+        # https://clickhouse.com/docs/integrations/s3#inserting-data
+        settings = {
+            's3_truncate_on_insert': 1 if config.MINIO_REPLACE_STRATEGY == "OVERWRITE" else 0,
+            's3_create_new_file_on_insert': 1 if config.MINIO_REPLACE_STRATEGY == "KEEP_BOTH" else 0,
+        }
+
         # Check if tables are valid and exist
         if not check_entries(clickhouse, entries):
             utils.webhook("Backup process failed due to invalid table configuration.") # Webhook is enough, prints are done in check_entries
@@ -165,10 +177,7 @@ def main() -> None:
                 utils.retry_and_wait(function=clickhouse.command, retry_on=ClickHouseError, retries=3,
                     cmd=query,
                     parameters=params,
-                    # Required if the file already exists (overrides it if set to 1).
-                    # See https://clickhouse.com/docs/integrations/s3#inserting-data
-                    # TODO make this configurable
-                    settings={'s3_truncate_on_insert': 1},
+                    settings=settings,
                 )
                 print(f"[clickhouse-backup] Backup for table '{table}' completed successfully.")
             except ClickHouseError as e:

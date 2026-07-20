@@ -26,6 +26,7 @@ MINIO_SECRET_KEY='minioadmin'
 MINIO_BUCKET='clickhouse-backups'
 MINIO_PATH='clickhouse-backups'
 MINIO_SECURE=false # Automatically enabled if the endpoint starts with 'https://'
+MINIO_REPLACE_STRATEGY='ERROR' # Options: ERROR, OVERWRITE, KEEP_BOTH
 
 RETENTION_PERIOD=7d
 DISCORD_WEBHOOK_URL=''
